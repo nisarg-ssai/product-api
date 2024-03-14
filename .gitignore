@@ -1,0 +1,6 @@
+temp.txt
+node_modules
+.env
+dist
+*.bru
+bruno.*
