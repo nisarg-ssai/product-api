@@ -15,4 +15,9 @@ export class ProductController {
     add(@Body() product: AddProductDto): Promise<string> {
         return this.productService.addProduct(product);
     }
+
+    @Get("grouped")
+    grouped(@Query() query): Promise<any> {
+        return this.productService.grouped(query)
+    }
 }

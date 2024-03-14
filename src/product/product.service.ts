@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-// import { ElasticsearchService } from "@nestjs/elasticsearch";
 import { ElasticSearchClient } from "src/elastic";
-import { AddProductDto, ProductDto, ProductTypeEnum } from "./dto";
+import { AddProductDto, ProductDto } from "./dto";
 
 @Injectable()
 export class ProductService {
@@ -33,10 +32,10 @@ export class ProductService {
             },
         });
 
-        // return res;
         return {
             docs: res.hits.hits,
-            sellCount: res.aggregations.total_quantity.value,
+            quantity_sell_count: res.aggregations.total_quantity.value,
+            invoice_count: res.hits.total,
         };
     }
 
@@ -56,8 +55,47 @@ export class ProductService {
         });
 
         console.log(res);
-
         return res.result;
+    }
+
+    async grouped(query): Promise<any> {
+        const filters = this.makeFilters(query);
+
+        console.log(filters);
+
+        const searchQuery = {
+            index: "intern",
+            body: {
+                size: 0,
+                query: {
+                    bool: {
+                        must: [{ match_all: {} }, filters],
+                    },
+                },
+                aggs: {
+                    type_group: {
+                        terms: {
+                            field: "type.keyword",
+                        },
+                        aggs: {
+                            total_sold: {
+                                sum: {
+                                    field: "quantity",
+                                },
+                            },
+                            invoices: {
+                                value_count: {
+                                    field: "purchaseId",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        };
+        const res = await ElasticSearchClient.client.search(searchQuery);
+
+        return res;
     }
 
     private makeFilters(query): any {
